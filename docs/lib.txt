@@ -1,0 +1,29 @@
+Primary Sources
+
+	Detection of Faults and Attacks Including False Data Injection Attack in Smart Grid Using Kalman Filter (Manandhar, Cao, Hu, Liu)
+	https://ieeexplore.ieee.org/document/6897944
+
+	Dynamic Harmonic Regression (Young, Pedregal, Tych)
+	http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.146.3061&rep=rep1&type=pdf
+	
+	Attack detection in Water Supply Systems using Kalman filter estimator (Manandhar, Cao, Hu)
+	https://ieeexplore.ieee.org/document/6222737
+
+	Combating False Data Injection Attacks in Smart Grid using Kalman Filter (Manandhar, Cao, Hu, Liu)
+	https://ieeexplore.ieee.org/document/6785297
+	
+Kalman Filter References
+
+	An Introduction to the Kalman Filter (Welch, Bishop)
+	http://www.cs.unc.edu/~tracker/media/pdf/SIGGRAPH2001_CoursePack_08.pdf
+
+	The Kalman Filter: An algorithm for making sense of fused sensor insight (Srini)
+	https://towardsdatascience.com/kalman-filter-an-algorithm-for-making-sense-from-the-insights-of-various-sensors-fused-together-ddf67597f35e
+
+	How a Kalman filter works, in pictures (No author named)
+	https://www.bzarg.com/p/how-a-kalman-filter-works-in-pictures/
+
+	
+
+
+	
