@@ -10,16 +10,14 @@ stopTime = 1; %seconds
 freq = 60; %hertz
 
 % wave amplitude
-amplitude = 1; %volts % TODO do I need to calculate the A* and Ao?  Unsure what they are
-% VERIFIED amplitude is okay, all it does is change the height (duh)
-% doesn't change anything about the freq of the sine wave
-% SO probably not a huge deal
+amplitude = 1; %volts
 
 % phase
 phase = 1; % TODO they didn't provide this in the experimental setup...just assume it is 1? 0?
 
 % random noise attack?
 randNoiseAttack = true;
+% other types of attacks here
 
 %% Calculate timesteps
 
@@ -31,19 +29,18 @@ dt = 1/samplingFreq;
 
 % generate all timesteps for the sim aka when each sampling event will
 % occur
-t = (0:dt:stopTime);
+t = 0:dt:stopTime;
 
 %% Generate measurements
 
 % generate a randomized measurement for each timestep
 y = zeros(1,size(t,2));
+yNoNoise = zeros(1,size(t,2));
 for idx = 1:size(t,2)
     timeNow = t(idx);
     C = [cos(2*pi*freq*timeNow) -sin(2*pi*freq*timeNow)];
     x1 = amplitude*cos(phase); 
     x2 = amplitude*sin(phase);
-%     x1 = 1;
-%     x2 = 1;
     x = [x1 ; x2];
     lower = -1;
     upper = 1;
@@ -51,12 +48,19 @@ for idx = 1:size(t,2)
     v = randomNum; % TODO this should be Gaussian, but just make it a random num for now
 %     v = 0;
     y(idx) = C*x + v;
+    yNoNoise(idx) = C*x;
 end
 figure()
 plot(t,y)
 xlabel('time')
 ylabel('voltage signal (with noise)')
 title('Sensor measurements of voltage, including Gaussian white noise')
+
+figure()
+plot(t,yNoNoise)
+xlabel('time')
+ylabel('voltage signal (no noise)')
+title('Sensor measurements of voltage, no measurement noise')
 
 
 %% Initialize state
@@ -78,6 +82,7 @@ Q = zeros(2,2); % TODO set values for this
 % measurement noise covariance matrix
 R = 1; % TODO set values for this
 
+% create the attack
 if randNoiseAttack
     lower = -10;
     upper = 10;
@@ -91,6 +96,7 @@ else
     randomNums = zeros(size(t,2),1);
 end
 
+% Kalman loop
 x_ = [];
 for idx = 1:size(t,2)
     timeNow = t(idx);
@@ -128,4 +134,4 @@ lowertime = 1001;
 uppertime = 1500;
 plot(t(lowertime:uppertime),y(lowertime:uppertime)'+randomNums(lowertime:uppertime), 'm')
 plot(t,y+randomNums','m')
-legend('signal','kalman estimate')
+legend('kalman estimate', 'signal')
