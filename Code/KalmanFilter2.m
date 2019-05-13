@@ -1,10 +1,16 @@
-%% Parameters to set
+%% Add utils to path
+% NOTE: you must cd to where this file is saved on the system, and ensure
+% that createColors is stored at the same file level
+run('createColors.m')
+
+%% Parameters to set (given on pg 375 of paper)
 
 % sampling frequency
-samplingFreq = 2; %kilohertz -> sample 1,000 times per second
+samplingFreq = 1; %kilohertz -> sample 1,000 times per second
 
 % stop time (decide when to end the simulation)
-stopTime = 1; %seconds
+% for running locally on laptop, can't be too large
+stopTime = 5; %seconds
 
 % wave frequency
 freq = 60; %hertz
@@ -13,35 +19,40 @@ freq = 60; %hertz
 amplitude = 1; %volts
 
 % phase
-phase = 1; % TODO they didn't provide this in the experimental setup...just assume it is 1? 0?
+phase = 1; %the only quantity not given in the experimental setup
+           % I chose 1 for simplicity
 
-% random noise attack?
+% what kind of attack to execute
 randNoiseAttack = true;
 % other types of attacks here
 
+
 %% Calculate timesteps
 
-% convert freq to use seconds
+% convert freq to use samples per second
 samplingFreq = samplingFreq*1000;
 
 % timestep size
 dt = 1/samplingFreq;
 
-% generate all timesteps for the sim aka when each sampling event will
-% occur
+% generate all timesteps for the sim 
+% (a sample is taken at each timestep)
 t = 0:dt:stopTime;
+
 
 %% Generate measurements
 
-% generate a randomized measurement for each timestep
-y = zeros(1,size(t,2));
-yNoNoise = zeros(1,size(t,2));
+% generate a randomized measurement for each timestep in the sim
+y = zeros(1,size(t,2)); % measurements with noise
+yNoNoise = zeros(1,size(t,2)); % measurements without noise
 for idx = 1:size(t,2)
     timeNow = t(idx);
+    % calculate quantities as described in the paper
     C = [cos(2*pi*freq*timeNow) -sin(2*pi*freq*timeNow)];
     x1 = amplitude*cos(phase); 
     x2 = amplitude*sin(phase);
     x = [x1 ; x2];
+    % generate a random quantity of measurement noise
     lower = -1;
     upper = 1;
     randomNum = lower+(upper-lower)*rand(1,1);
@@ -51,36 +62,36 @@ for idx = 1:size(t,2)
     yNoNoise(idx) = C*x;
 end
 figure()
-plot(t,y)
+plot(t,y,'Color',orange)
 xlabel('time')
 ylabel('voltage signal (with noise)')
 title('Sensor measurements of voltage, including Gaussian white noise')
 
 figure()
-plot(t,yNoNoise)
+plot(t,yNoNoise,'Color',orange)
 xlabel('time')
 ylabel('voltage signal (no noise)')
 title('Sensor measurements of voltage, no measurement noise')
 
 
-%% Initialize state
+%% Initialize state before using Kalman Filter
 
-% these nums are given in the paper
+% These are given on pg 375 of paper
 x1 = 0;
 x2 = 0;
 x = [x1 ; x2];
 P = eye(2);
 
+
 %% Time loop
 
-% TODO what is this called
-A = eye(2); % defined in paper to always be this value
+A = eye(2); %defined in the paper
 
 % process noise covariance matrix
-Q = zeros(2,2); % TODO set values for this
+Q = [.01 .01 ; .01 .01];
 
-% measurement noise covariance matrix
-R = 1; % TODO set values for this
+% measurement noise covariance
+R = 1;
 
 % create the attack
 if randNoiseAttack
@@ -97,20 +108,20 @@ else
 end
 
 % Kalman loop
-x_ = [];
+x_ = []; %this variable will keep track of the state at each time step
 for idx = 1:size(t,2)
     timeNow = t(idx);
     % time update
-    x = A*x
-    x_ = [x_;x];
-    P = A*P*A' + Q
+    x = A*x; %eqn 15
+    x_ = [x_;x]; %save off the state
+    P = A*P*A' + Q; %eqn 16
     
     % measurement update
-    C = [cos(2*pi*freq*timeNow) -sin(2*pi*freq*timeNow)];
-    K = P * C' * inv(C*P*C' + R);
+    C = [cos(2*pi*freq*timeNow) -sin(2*pi*freq*timeNow)]; %calculate C
+    K = P * C' * inv(C*P*C' + R); %eqn 17
     
-    x = x + K*(y(idx)+randomNums(idx) - C*x);
-    P = P - K*C*P;  
+    x = x + K*(y(idx)+randomNums(idx) - C*x); %eqn 19
+    P = P - K*C*P; %eqn 18
 end
 
 
@@ -119,19 +130,18 @@ x1_kalman = x_(1:2:end);
 x2_kalman = x_(2:2:end);
 voltage_kalman = zeros(1,size(t,2));
 
+% Need to calculate the voltage values based on the Kalman filter estimates
 for idx = 1:size(t,2)
     timeNow = t(idx);
     voltage = x1_kalman(idx)*cos(2*pi*freq*timeNow) - x2_kalman(idx)*sin(2*pi*freq*timeNow);
     voltage_kalman(idx) = voltage;
 end
 
-gcf
+figure()
+plot(t,voltage_kalman,'Color',purple)
 hold on
-plot(t,voltage_kalman,'r')
-
-hold on
-lowertime = 1001;
-uppertime = 1500;
-plot(t(lowertime:uppertime),y(lowertime:uppertime)'+randomNums(lowertime:uppertime), 'm')
-plot(t,y+randomNums','m')
+plot(t,y+randomNums','Color',green)
 legend('kalman estimate', 'signal')
+xlabel('time')
+ylabel('voltage')
+title('Voltage signal with Kalman estimates')
