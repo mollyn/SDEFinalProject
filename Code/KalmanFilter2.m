@@ -52,12 +52,9 @@ for idx = 1:size(t,2)
     x1 = amplitude*cos(phase); 
     x2 = amplitude*sin(phase);
     x = [x1 ; x2];
-    % generate a random quantity of measurement noise
-    lower = -1;
-    upper = 1;
-    randomNum = lower+(upper-lower)*rand(1,1);
-    v = randomNum; % TODO this should be Gaussian, but just make it a random num for now
-%     v = 0;
+    % generate measurement noise
+    % (Gaussian with mean=0, variance=1)
+    v = normrnd(0,1);
     y(idx) = C*x + v;
     yNoNoise(idx) = C*x;
 end
