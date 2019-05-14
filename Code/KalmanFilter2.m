@@ -10,7 +10,7 @@ samplingFreq = 1; %kilohertz -> sample 1,000 times per second
 
 % stop time (decide when to end the simulation)
 % for running locally on laptop, can't be too large
-stopTime = 5; %seconds
+stopTime = 20; %seconds
 
 % wave frequency
 freq = 60; %hertz
@@ -22,9 +22,9 @@ amplitude = 1; %volts
 phase = 1; %the only quantity not given in the experimental setup
            % I chose 1 for simplicity
 
-% what kind of attack to execute
+% whether to execute attack or not
 randNoiseAttack = true;
-% other types of attacks here
+randNoiseAttack = false;
 
 
 %% Calculate timesteps
@@ -58,17 +58,19 @@ for idx = 1:size(t,2)
     y(idx) = C*x + v;
     yNoNoise(idx) = C*x;
 end
-figure()
+ax1 = subplot(1,2,1);
 plot(t,y,'Color',orange)
 xlabel('time')
 ylabel('voltage signal (with noise)')
 title('Sensor measurements of voltage, including Gaussian white noise')
 
-figure()
+ax2 = subplot(1,2,2);
 plot(t,yNoNoise,'Color',orange)
 xlabel('time')
 ylabel('voltage signal (no noise)')
 title('Sensor measurements of voltage, no measurement noise')
+
+linkaxes([ax1 ax2], 'xy')
 
 
 %% Initialize state before using Kalman Filter
@@ -135,9 +137,13 @@ for idx = 1:size(t,2)
 end
 
 figure()
-plot(t,voltage_kalman,'Color',purple)
+plot(t,voltage_kalman,'Color',purple,'linewidth',2)
 hold on
-plot(t,y+randomNums','Color',green)
+if randNoiseAttack
+    plot(t,y+randomNums','Color',green)
+else
+    plot(t,y,'Color',green)
+end
 legend('kalman estimate', 'signal')
 xlabel('time')
 ylabel('voltage')
